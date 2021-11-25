@@ -105,9 +105,11 @@ def viewGameScreen(): #screen이 해당 값들을 가지면 해당 블럭 출력
                 pygame.draw.circle(screen, BLACK, [changeArrxToX(arrx),changeArryToY(arry)], 20)
             elif screenArr[arry][arrx] ==2: #컴퓨터
                 pygame.draw.circle(screen, WHITE, [changeArrxToX(arrx),changeArryToY(arry)], 20)
-            elif screenArr[arry][arrx] ==3: #컴퓨터이 블럭 랜덤위치
+            elif screenArr[arry][arrx] ==3: #컴퓨터의 블럭 랜덤위치
                 pygame.draw.circle(screen, BLUE, [changeArrxToX(arrx),changeArryToY(arry)], 20)
-
+            elif screenArr[arry][arrx] ==4: #게임이 끝난후 빈 공간이 있을 때 사용
+                pygame.draw.circle(screen, GREEN, [changeArrxToX(arrx),changeArryToY(arry)], 20)
+            
 def changeMousePosXToArrx(mousePosX):
     for i in range(0,SCREEN):
         if mousePosX < 50 * (i+1) -5 and mousePosX > 50*i +5:          
@@ -363,7 +365,7 @@ def setWhereComputerCanPutBlock():
     pygame.display.update()
 
 
-def moveNextTurn(): #둘 곳이 없을 경우 다음턴으로 넘어간다.
+def moveNextTurnWhenBlockCanNotPutPlace(): #둘 곳이 없을 경우 다음턴으로 넘어간다.
     global currentTurn
     global isClick
     cannotPutPlaceCnt =0
@@ -393,26 +395,28 @@ def viewGameResult():
                 playerBlockCnt = playerBlockCnt+1
             elif screenArr[row][col] ==2:
                 computerBlockCnt = computerBlockCnt+1
-                
+            screenArr[row][col] = 4
+    
     tmpBlockCnt =0
-
+    isFirstCheck = False
+    
     for row in range(0,SCREEN):
         for col in range(0,SCREEN):
-            if tmpBlockCnt < playerBlockCnt:
+            if (tmpBlockCnt < playerBlockCnt) and isFirstCheck == False:
                 screenArr[row][col] =1
                 tmpBlockCnt = tmpBlockCnt+1
             else:
-                screenArr[row][col] =2
-                
+                if isFirstCheck == False:
+                    isFirstCheck = True
+                    tmpBlockCnt =0
+                if tmpBlockCnt < computerBlockCnt:               
+                    screenArr[row][col] =2
+                    tmpBlockCnt = tmpBlockCnt+1
+                    
+             
     print("컴퓨터 블럭 개수 : ", computerBlockCnt)
     print("플레이어 블럭 개수 : ", playerBlockCnt)
-
-    if computerBlockCnt < playerBlockCnt:
-        print("플레이어 승리")
-    elif computerBlockCnt > playerBlockCnt:
-        print("컴퓨터 승리")
-    else: #동점
-        print("무승부")
+    print("tmpBlockCnt : ", tmpBlockCnt)
 
     clearStateScreen(True)
     
@@ -428,6 +432,7 @@ def viewGameResult():
     pygame.display.update()
     print("개수 출력화면까지 끝")
     time.sleep(3)
+    #이후 다시 게임을 다시할지 시작화면으로갈지 끌지 선택.
     sys.exit()
                 
 
@@ -478,14 +483,14 @@ def printTurn(pTurn):
     
 
 def clearStateScreen(isGameOver):
-    clearScreenScaleY =80
+    clearScreenScaleY =145
     
     if isGameOver == True:
         clearScreenScaleY = 400
-        print("sclearScreenScaleY =400")
     
     pygame.draw.rect(screen, WHITE, [403,0,200,clearScreenScaleY])
     pygame.display.update()
+   
 
 
 def printTurnInformation():
@@ -536,12 +541,20 @@ def printWinner(winner):
     
     winnerFont = pygame.font.SysFont("arial",40)
     winnerContentFont = pygame.font.SysFont("arial",30)
-    
-    winnerText = winnerFont.render("Winner", True, RED)
+
+    if winner != "Draw":
+        winnerText = winnerFont.render("Winner", True, RED)
+    else:
+        winnerText = winnerFont.render("Result", True, RED)
     winnerContentText = winnerContentFont.render("-"+winner+"-", True, YELLOW)
     
     screen.blit(winnerText, (450,50))
-    screen.blit(winnerContentText, (440,100))
+    if winner == "Computer":
+        screen.blit(winnerContentText, (440,100))
+    elif winner == "Plyaer":
+        screen.blit(winnerContentText, (460,100))
+    else:
+        screen.blit(winnerContentText, (460,100))
     pygame.display.update()
 
 
@@ -552,14 +565,21 @@ def printBlockCnt(playerBlockCnt, computerBlockCnt):
     playerBlockCntText = font.render("Player Block : "+ str(playerBlockCnt), True, BLACK)
     computerBlockCntText = font.render("Computer Block : " + str(computerBlockCnt), True, BLACK)
     
-    screen.blit(playerBlockCntText, (450,200))
-    screen.blit(computerBlockCntText, (440,225))
+    screen.blit(playerBlockCntText, (440,200))
+    screen.blit(computerBlockCntText, (430,225))
     pygame.display.update()
 
 
 
-
-
+def printReplayButton():
+    font = pygame.font.SysFont("arial",40)
+    replayBtnText = font.render("Replay", True, WHITE,2)
+    screen.blit(replayBtnText, (100,200))
+    
+def printGoStartScreenButton():
+    font = pygame.font.SysFont("arial",40)
+    goStartScreenBtnText = font.render("Go StartScreen", True, WHITE,2)
+    screen.blit(goStartScreenBtnText, (300,200))
 
 
 #둘다 블럭을  놓을 수 없는 경우
@@ -575,15 +595,24 @@ def printBlockCnt(playerBlockCnt, computerBlockCnt):
 ##screenArr[7][7] =1
 ##screenArr[6][7] =0
 
-for row in range(0,SCREEN):
-        for col in range(0,SCREEN):
-            screenArr[row][col] =2
-screenArr[0][0] =1
+##
+##for row in range(0,SCREEN):
+##    for col in range(0,SCREEN):
+##        screenArr[row][col] =2
+##
+##screenArr[2][2]=1
+##screenArr[1][0]=0
+##screenArr[2][0]=0
+##screenArr[3][0]=0
 
 setDiagonalCnt()
 viewGameScreen()
 printTurnInformation()
 printUserColorInformation()
+
+
+printReplayButton()
+printGoStartScreenButton()
 
 
 #Game Loop
@@ -597,12 +626,12 @@ while True:
             sys.exit()
             
         if event.type == pygame.MOUSEBUTTONDOWN:
-            tmpMousePos = []
-            tmpMousePos.append(changeMousePosXToArrx(pygame.mouse.get_pos()[0]))
-            tmpMousePos.append(changeMousePosYToArry(pygame.mouse.get_pos()[1]))
+            mousePosToArr = []
+            mousePosToArr.append(changeMousePosXToArrx(pygame.mouse.get_pos()[0]))
+            mousePosToArr.append(changeMousePosYToArry(pygame.mouse.get_pos()[1]))
     
-            if not(tmpMousePos[0] ==-1 or tmpMousePos[1] ==-1):
-                if InspectIfItCanBePlacedInPlace(tmpMousePos[0],tmpMousePos[1], True, currentTurn) ==1:
+            if not(mousePosToArr[0] ==-1 or mousePosToArr[1] ==-1):
+                if InspectIfItCanBePlacedInPlace(mousePosToArr[0],mousePosToArr[1], True, currentTurn) ==1:
                     mousePos = pygame.mouse.get_pos() #자료형 : tuple
                     screenArr[changeMousePosYToArry(mousePos[1])][changeMousePosXToArrx(mousePos[0])] =1 #클릭한 곳 색깔 바꾸기    
                     currentTurn = changeTurn(currentTurn) #턴 바꾸기
@@ -610,10 +639,12 @@ while True:
                     printTurnInformation() #플레이어 -> 컴퓨터 턴 : 컴퓨터 턴 출력
                     
                     
-    moveNextTurn()
+    
     
     viewGameScreen()
     pygame.display.update()
+
+    moveNextTurnWhenBlockCanNotPutPlace()
     
     if currentTurn ==2 :
         time.sleep(2)
